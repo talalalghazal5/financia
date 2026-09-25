@@ -4,8 +4,12 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
-    "post": {
-      "model": "Post",
+    "category": {
+      "model": "Category",
+      "namespace": "public"
+    },
+    "transaction": {
+      "model": "Transaction",
       "namespace": "public"
     },
     "user": {
@@ -16,24 +20,106 @@
   "domain": {
     "namespaces": {
       "public": {
-        "models": {
-          "Post": {
-            "fields": {
-              "authorId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
+        "enum": {
+          "Type": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "expense",
+                "value": "expense"
               },
-              "content": {
-                "nullable": true,
+              {
+                "name": "income",
+                "value": "income"
+              }
+            ]
+          }
+        },
+        "models": {
+          "Category": {
+            "fields": {
+              "color": {
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
-              "createdAt": {
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "monthlyBudget": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "transactions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "categoryId"
+                  ]
+                },
+                "to": {
+                  "model": "Transaction",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "color": {
+                  "column": "color"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "monthlyBudget": {
+                  "column": "monthlyBudget"
+                },
+                "name": {
+                  "column": "name"
+                }
+              },
+              "namespaceId": "public",
+              "table": "category"
+            }
+          },
+          "Transaction": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "categoryId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "date": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/timestamptz-string@1",
@@ -43,7 +129,14 @@
               "id": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/int4@1",
+                  "codecId": "pg/uuid@1",
+                  "kind": "scalar"
+                }
+              },
+              "isRecurring": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
                   "kind": "scalar"
                 }
               },
@@ -54,21 +147,50 @@
                   "kind": "scalar"
                 }
               },
-              "updatedAt": {
+              "type": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-string@1",
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "Type",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/uuid@1",
                   "kind": "scalar"
                 }
               }
             },
             "relations": {
-              "author": {
+              "category": {
                 "cardinality": "N:1",
                 "nullable": false,
                 "on": {
                   "localFields": [
-                    "authorId"
+                    "categoryId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Category",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
                   ],
                   "targetFields": [
                     "id"
@@ -82,27 +204,33 @@
             },
             "storage": {
               "fields": {
-                "authorId": {
-                  "column": "authorId"
+                "amount": {
+                  "column": "amount"
                 },
-                "content": {
-                  "column": "content"
+                "categoryId": {
+                  "column": "categoryId"
                 },
-                "createdAt": {
-                  "column": "createdAt"
+                "date": {
+                  "column": "date"
                 },
                 "id": {
                   "column": "id"
                 },
+                "isRecurring": {
+                  "column": "isRecurring"
+                },
                 "title": {
                   "column": "title"
                 },
-                "updatedAt": {
-                  "column": "updatedAt"
+                "type": {
+                  "column": "type"
+                },
+                "userId": {
+                  "column": "userId"
                 }
               },
               "namespaceId": "public",
-              "table": "post"
+              "table": "transaction"
             }
           },
           "User": {
@@ -124,12 +252,19 @@
               "id": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/int4@1",
+                  "codecId": "pg/uuid@1",
                   "kind": "scalar"
                 }
               },
               "name": {
-                "nullable": true,
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "passwordHash": {
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -141,28 +276,21 @@
                   "codecId": "pg/timestamptz-string@1",
                   "kind": "scalar"
                 }
-              },
-              "username": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
               }
             },
             "relations": {
-              "posts": {
+              "transactions": {
                 "cardinality": "1:N",
                 "on": {
                   "localFields": [
                     "id"
                   ],
                   "targetFields": [
-                    "authorId"
+                    "userId"
                   ]
                 },
                 "to": {
-                  "model": "Post",
+                  "model": "Transaction",
                   "namespace": "public"
                 }
               }
@@ -181,11 +309,11 @@
                 "name": {
                   "column": "name"
                 },
+                "passwordHash": {
+                  "column": "passwordHash"
+                },
                 "updatedAt": {
                   "column": "updatedAt"
-                },
-                "username": {
-                  "column": "username"
                 }
               },
               "namespaceId": "public",
@@ -201,19 +329,58 @@
       "public": {
         "entries": {
           "table": {
-            "post": {
+            "category": {
               "columns": {
-                "authorId": {
-                  "codecId": "pg/int4@1",
-                  "nativeType": "int4",
-                  "nullable": false
-                },
-                "content": {
+                "color": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": true
+                  "nullable": false
                 },
-                "createdAt": {
+                "id": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "monthlyBudget": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "transaction": {
+              "checks": [
+                {
+                  "expression": "\"type\" IN ('expense', 'income')",
+                  "name": "transaction_type_check_d28fee16",
+                  "prefix": "transaction_type_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": false
+                },
+                "categoryId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "date": {
                   "codecId": "pg/timestamptz-string@1",
                   "default": {
                     "expression": "now()",
@@ -223,12 +390,13 @@
                   "nullable": false
                 },
                 "id": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "expression": "autoincrement()",
-                    "kind": "function"
-                  },
-                  "nativeType": "int4",
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
+                  "nullable": false
+                },
+                "isRecurring": {
+                  "codecId": "pg/bool@1",
+                  "nativeType": "bool",
                   "nullable": false
                 },
                 "title": {
@@ -236,9 +404,24 @@
                   "nativeType": "text",
                   "nullable": false
                 },
-                "updatedAt": {
-                  "codecId": "pg/timestamptz-string@1",
-                  "nativeType": "timestamptz",
+                "type": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "expense"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "Type",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "userId": {
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
                   "nullable": false
                 }
               },
@@ -246,10 +429,10 @@
                 {
                   "source": {
                     "columns": [
-                      "authorId"
+                      "userId"
                     ],
                     "namespaceId": "public",
-                    "tableName": "post"
+                    "tableName": "transaction"
                   },
                   "target": {
                     "columns": [
@@ -258,15 +441,39 @@
                     "namespaceId": "public",
                     "tableName": "user"
                   }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "categoryId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "transaction"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "category"
+                  }
                 }
               ],
               "indexes": [
                 {
                   "columns": [
-                    "authorId"
+                    "categoryId"
                   ],
-                  "name": "post_authorId_idx_e47547ed",
-                  "prefix": "post_authorId_idx",
+                  "name": "transaction_categoryId_idx_15c304f2",
+                  "prefix": "transaction_categoryId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "transaction_userId_idx_a489d58a",
+                  "prefix": "transaction_userId_idx",
                   "unique": false
                 }
               ],
@@ -294,28 +501,24 @@
                   "nullable": false
                 },
                 "id": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "expression": "autoincrement()",
-                    "kind": "function"
-                  },
-                  "nativeType": "int4",
+                  "codecId": "pg/uuid@1",
+                  "nativeType": "uuid",
                   "nullable": false
                 },
                 "name": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": true
+                  "nullable": false
+                },
+                "passwordHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
                   "nullable": false
-                },
-                "username": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
                 }
               },
               "foreignKeys": [],
@@ -333,31 +536,58 @@
                 }
               ]
             }
+          },
+          "valueSet": {
+            "Type": {
+              "kind": "valueSet",
+              "values": [
+                "expense",
+                "income"
+              ]
+            }
           }
         },
         "id": "public",
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "1e8412e162dbbe69f4bb3bf8d07f0280ae67eaab15c34dcf201e67468315428d"
+    "storageHash": "b01ff7fb47bba6e42256a387f74cea4ef51d375f62b03cb2ce80043a9477a098"
   },
   "execution": {
-    "executionHash": "4abff323cc88151ef9c9a0ec90122cfee6d46814a118cdb66a9fdd94a4123463",
+    "executionHash": "24fb535192fb7502cc35a4d64b299cde68d1087803c372b0edca47f4499298c4",
     "mutations": {
       "defaults": [
         {
           "onCreate": {
-            "id": "timestampNow",
-            "kind": "generator"
-          },
-          "onUpdate": {
-            "id": "timestampNow",
+            "id": "uuidv4",
             "kind": "generator"
           },
           "ref": {
-            "column": "updatedAt",
+            "column": "id",
             "namespace": "public",
-            "table": "post"
+            "table": "category"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "transaction"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "user"
           }
         },
         {
