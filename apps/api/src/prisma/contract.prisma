@@ -1,21 +1,36 @@
 // use prisma-8
-
 model User {
-  id        Uuid     
-  email     String   @unique
-  username  String?
-  name      String?
-  posts     Post[]
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+  id           Uuid                       @id @default(uuid())
+  name         String
+  email        String                     @unique
+  passwordHash String
+  transactions Transaction[]
+  createdAt    TimestamptzString          @default(now())
+  updatedAt    temporal.updatedAtString()
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+model Category {
+  id            Uuid          @id @default(uuid())
+  name          String
+  monthlyBudget Float
+  color         String
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id          Uuid              @id @default(uuid())
+  userId      Uuid
+  categoryId  Uuid
+  title       String
+  amount      Float
+  user        User              @relation(fields:[userId], references:[id])
+  category    Category          @relation(fields:[categoryId], references:[id])
+  type        Type              @default(expense)
+  date        TimestamptzString @default(now())
+  isRecurring Boolean
+}
+
+enum Type {
+  expense
+  income
 }
